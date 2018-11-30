@@ -1,0 +1,65 @@
+char reception[5]; //tableau pour la réception des données (5 valeurs)
+int ledrPin[] = {2,6,9};
+
+
+
+
+void setup() {
+
+  Serial.begin(9600); //on initialise la communication série
+  pinMode (ledrPin[0],OUTPUT);
+  pinMode (ledrPin[1],OUTPUT);
+  pinMode (ledrPin[2],OUTPUT);
+  
+
+}
+
+
+void loop() {
+
+  while (Serial.available()) { //tant que des données sont en attente
+
+	String Message = Serial.read();
+     Char Mess[0] = Message[0];
+      Serial.println(Mess[0];
+	
+
+  }
+
+}
+
+
+//fonction pour décoder la réception
+
+void decodage(char c[5]){
+
+  for (int p=0;p<5;p++){ //on parcourt le tableau
+
+    Serial.print("LED "); //on écrit le mot LED
+
+    Serial.print(p+1); //on écrit le numéro de la LED (position dans taleau +1)
+
+    Serial.print(" "); //on fait un espace
+
+    if (c[p]=='a') {// on test si le code est 'a'
+
+    	Serial.println("allumee"); //si oui on écrit "allumee"
+    	
+      digitalWrite(ledrPin[p], HIGH);	}
+
+    else if (c[p]=='e') {// sinon on teste si le code est 'e'
+
+      Serial.println("eteinte"); //si oui on écrit "éteinte"
+       digitalWrite(ledrPin[p], LOW);	}
+
+    else if (c[p]=='c') //sinon on teste si le code est 'c'
+
+      Serial.println("clignote"); //si oui on écrit "clignote'"
+
+    else //sinon c'est que ça ne correspond à rien
+
+      Serial.println("erreur de code"); // on inscrit donc "erreur de code"
+
+  }
+
+}
