@@ -1,0 +1,95 @@
+/* String Command In Serial Port using String 
+  
+    Le programme attend qu'une commande arrive sur le moniteur série.
+    Assurez vous que le moniteur série d'Arduino soit bien configuré sur "Carriage Return"
+      Entrer 'on' allume la LED connectée sur la pin 13.
+      Entrer 'off' éteint la LED connectée sur la pin 13.
+    Cela fournit une alternative à Bitlash.
+    
+    Le circuit:
+    La Pin 13 est connectée à une résistance de 220-ohm, qui est alors 
+    connecté à une LED et ensuite à la masse (GND). Comme alternative,
+    vous pouvez regarder la LED "L" visible sur la carte Arduino et 
+    déjà raccordée sur la broche 13.
+    
+    Créé le July 21, 2010, par Mark Aosawa. mark.aosawa@yahoo.com
+    Modifié en profondeur April 7, 2012 par MC Hobby, info@mchobby.be    
+    
+  */
+  
+  //String buffer/mémoire tampon
+  String cmd = String("");
+  
+  // Initialiser la LED de la pin 13 comme sortie (OUTPUT)
+  int ledPin = LED_BUILTIN;
+  
+  void setup() {
+  // Initialise la communication série (et baud rate à 9600):
+  Serial.begin(9600);
+
+  pinMode(ledPin, OUTPUT);
+  // Affiche un message quand le port série est ouvert.
+  // Permet de vérifier que le programme est bien en court de fonctionnement
+  Serial.println("Serial communication is ready.");
+  }
+
+  void loop() {
+
+    // Vérifier si des caractères sont reçu sur le port série
+    if (Serial.available() > 0) {
+      
+       // Variable temporaire pour copier le caractère lu
+       char SerialInByte;
+       // Lire un caractère (un Byte)
+       SerialInByte = Serial.read();
+      
+       // Si c'est <CR> --> traiter la commande
+       if(SerialInByte==13){ 
+          ProcessCmd();
+       }else{
+          // sinon, ajouter le caractère à la mémoire tampon (cmd)
+          cmd += String(SerialInByte);
+          
+          // et afficher un message de déboggage
+          Serial.print( "SerialInByte: " );
+          Serial.print( SerialInByte, DEC );
+          Serial.print( ", Buffer " );
+          Serial.println( cmd );
+       }
+    }
+  }
+  
+  // Renvoyer la commande (contenu du buffer) sur le port série
+  void printCmd(){
+    Serial.println(cmd);
+  }
+  
+  // Réinitialiser le buffer (et vider le port série)
+  void clearCmd(){
+    cmd="";
+    Serial.flush();
+  }
+  
+  // Interpréter la commande reçue
+  //
+  void ProcessCmd() {
+    // Un petit message de débogage. La commande est entourée avec [] pour clairement
+    // identifier chacun des caractères qui la compose (même les espaces).
+    Serial.print( "ProcessCmd for [" );
+    Serial.print( cmd );
+    Serial.println( "]" );
+    
+    if(cmd.equals("on")){
+         printCmd();
+         digitalWrite(ledPin, HIGH);
+         clearCmd();
+    }else if(cmd.equals("off")){
+        printCmd();
+        digitalWrite(ledPin, LOW);
+        clearCmd();
+    }else{
+         // toutes les autres commandes sont ignorées.
+         Serial.println("unknown command!");
+         clearCmd();
+    }
+}
