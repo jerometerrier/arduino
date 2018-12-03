@@ -1,4 +1,6 @@
-/* String Command In Serial Port using String 
+/* Link : https://wiki.mchobby.be/index.php?title=SerialCommand
+
+ String Command In Serial Port using String 
   
     Le programme attend qu'une commande arrive sur le moniteur série.
     Assurez vous que le moniteur série d'Arduino soit bien configuré sur "Carriage Return"
