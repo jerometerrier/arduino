@@ -26,7 +26,17 @@ bool wifiAbnormalDisconnect = false;
 
 //mqtt因为网络断开后重新连接标志
 bool mqttReconnectFlag = false;
+const String topic1 = "COM/ARDUINO";
 
+
+//pin constantes
+const byte pinPortillon = 2;
+const byte pinPortail = 3;
+const byte pinPortailPartiel = 4;
+const byte pinPortailPosition = 5;
+const byte pinGarage = 6;
+
+const byte pinOut[] = {pinPortillon, pinPortail, pinPortailPartiel, pinPortailPosition, pinGarage};
 
 SoftwareSerial softSerial(10,11);
 
@@ -200,6 +210,11 @@ void handleUart()
       Serial.println("subscribe successed");
             //subscribeMqttTopic = false;
         }
+        else if (strcmp(obloqMessage, "|4|1|2|2|1|") == 0)
+    {
+      Serial.println("maximum subscribed reachs");
+            //subscribeMqttTopic = false;
+        }
         //DF-IoT接收到消息，topic和message传入receiveMessageCallbak函数
         else if (strstr(obloqMessage, "|4|1|5|") != NULL)
         {
@@ -294,26 +309,82 @@ void receiveMessageCallbak(String topic,String message)
 {
     Serial.println("Message from: " + topic);
     Serial.println("Message content: " + message);
-    if(message.equals("on")){
+    /*if(message.equals("on")){
       digitalWrite(LED_BUILTIN,HIGH);
     }
         if(message.equals("off")){
       digitalWrite(LED_BUILTIN,LOW);
+
+      useRelay (LED_BUILTIN,100);
+      delay(100);
+      useRelay (LED_BUILTIN,200);
+            delay(100);
+      useRelay (LED_BUILTIN,500);
+            delay(100);
+      useRelay (LED_BUILTIN,1000);
+    }*/
+
+  
+    if(message.equals("portillon"))
+    {
+      useRelay (pinPortillon,200);
+      publish(topic1,"Portillon ouvert");
     }
+    
+    if(message.equals("portail"))
+    {
+      useRelay (pinPortail,200);
+      publish(topic1,"Portail ouvert");
+    }
+    
+    if(message.equals("portailPartiel"))
+    {
+      useRelay (pinPortailPartiel,200);
+      publish(topic1,"Portail partiellement ouvert");
+    }
+
+/*      switch(obloqCom)
+    {
+        case portillon: useRelay (LED_BUILTIN,100);obloqCom = wait; break;
+        case portail: useRelay (LED_BUILTIN,2000);obloqCom = wait; break;
+        case portailPartiel :  useRelay (LED_BUILTIN,5000);obloqCom = wait; break;
+        default: break;
+    }
+*/    
+}
+
+/********************************************************************************************
+Function    : useRelay     
+Description : declencher le relais concerné
+Params      : pin : numéro du pin du relais ; delai : temps de mise à 1 du relais
+Return      : 
+********************************************************************************************/
+void useRelay (int pin,int delai)
+{
+  digitalWrite(pin,HIGH);
+  delay(delai);
+  digitalWrite(pin,LOW);
+  
 }
 
 
 void setup()
 {
     Serial.begin(9600);
-    softSerial.begin(9600);    
+    softSerial.begin(9600); 
+    //initialisation des pins
+        for (int i = 0; i < 4; i++) 
+        {
+          pinMode(pinOut[i], OUTPUT);       // Toutes les pins sont commutées en OUT
+        }
+      
 }
 
 void loop()
 {
     sendPing();
     execute();
-    subscribeSingleTopic("test/temp");
+    subscribeSingleTopic(topic1);
     handleUart();
     checkWifiState();
     //Serial.println("Program OK");
