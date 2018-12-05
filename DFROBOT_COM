@@ -17,6 +17,7 @@ static unsigned long pingInterval = 2000;
 
 static unsigned long sendMessageInterval = 10000;
 unsigned long previousPingTime = 0;
+unsigned long previousSendMessageTime = 0;
 bool subscribeSuccess = false;
 String receiveStringIndex[10] = {};
 
@@ -26,7 +27,8 @@ bool wifiAbnormalDisconnect = false;
 
 //mqtt因为网络断开后重新连接标志
 bool mqttReconnectFlag = false;
-const String topic1 = "COM/ARDUINO";
+const String topicCom = "COM/ARDUINO"; //topic pour les relais
+const String topicPortail = "COM/PORTAILPOS"; // topic pour la position du portail
 
 
 //pin constantes
@@ -205,16 +207,17 @@ void handleUart()
             }
             obloqState = MQTTCONNECTOK;
         }
+    else if (strcmp(obloqMessage, "|4|1|2|2|1|") == 0)
+    {
+      Serial.println("maximum subscribed reachs");
+            //subscribeMqttTopic = false;
+        }
         else if (strcmp(obloqMessage, "|4|1|2|1|") == 0)
     {
       Serial.println("subscribe successed");
             //subscribeMqttTopic = false;
         }
-        else if (strcmp(obloqMessage, "|4|1|2|2|1|") == 0)
-    {
-      Serial.println("maximum subscribed reachs");
-            //subscribeMqttTopic = false;
-        }
+
         //DF-IoT接收到消息，topic和message传入receiveMessageCallbak函数
         else if (strstr(obloqMessage, "|4|1|5|") != NULL)
         {
@@ -309,38 +312,23 @@ void receiveMessageCallbak(String topic,String message)
 {
     Serial.println("Message from: " + topic);
     Serial.println("Message content: " + message);
-    /*if(message.equals("on")){
-      digitalWrite(LED_BUILTIN,HIGH);
-    }
-        if(message.equals("off")){
-      digitalWrite(LED_BUILTIN,LOW);
-
-      useRelay (LED_BUILTIN,100);
-      delay(100);
-      useRelay (LED_BUILTIN,200);
-            delay(100);
-      useRelay (LED_BUILTIN,500);
-            delay(100);
-      useRelay (LED_BUILTIN,1000);
-    }*/
-
   
     if(message.equals("portillon"))
     {
       useRelay (pinPortillon,200);
-      publish(topic1,"Portillon ouvert");
+      publish(topicCom,"Portillon ouvert");
     }
     
-    if(message.equals("portail"))
+    else if(message.equals("portail"))
     {
       useRelay (pinPortail,200);
-      publish(topic1,"Portail ouvert");
+      publish(topicCom,"Portail ouvert");
     }
     
-    if(message.equals("portailPartiel"))
+    else if(message.equals("portailPartiel"))
     {
       useRelay (pinPortailPartiel,200);
-      publish(topic1,"Portail partiellement ouvert");
+      publish(topicCom,"Portail partiellement ouvert");
     }
 
 /*      switch(obloqCom)
@@ -367,6 +355,27 @@ void useRelay (int pin,int delai)
   
 }
 
+void readPin()
+{
+      if(obloqConnectMqtt && millis() - previousSendMessageTime > 3000) //每隔5s，向Hy6z0Pb1G设备发送消息，消息内容是此时读取的LM35温度数据
+    {
+        previousSendMessageTime = millis();
+        //获取温度数据
+        byte posPortail = digitalRead(pinPortailPosition);
+        Serial.println(posPortail);
+
+        if (posPortail == 0) //portail ouvert
+        {
+          publish(topicPortail,"0"); 
+        }
+        else if (posPortail == 1) //portail ouvert
+        {
+          publish(topicPortail,"1"); 
+        }
+        
+        
+}
+}
 
 void setup()
 {
@@ -384,8 +393,8 @@ void loop()
 {
     sendPing();
     execute();
-    subscribeSingleTopic(topic1);
+    subscribeSingleTopic(topicCom);
     handleUart();
     checkWifiState();
-    //Serial.println("Program OK");
+    readPin();
 }
